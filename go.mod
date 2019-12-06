@@ -1,3 +1,3 @@
-module github.com/guoweis/gocsv
+module github.com/gocarina/gocsv
 
 go 1.13
