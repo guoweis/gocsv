@@ -8,6 +8,10 @@ import (
 	"reflect"
 )
 
+var errHandler ErrorHandler
+
+func SetErrorHandler(f ErrorHandler) { errHandler = f }
+
 // Decoder .
 type Decoder interface {
 	getCSVRows() ([][]string, error)
@@ -124,7 +128,7 @@ func normalizeHeaders(headers []string) []string {
 	return out
 }
 
-func readTo(decoder Decoder, errHandler ErrorHandler, out interface{}) error {
+func readTo(decoder Decoder, out interface{}) error {
 	outValue, outType := getConcreteReflectValueAndType(out) // Get the concrete type (not pointer) (Slice<?> or Array<?>)
 	if err := ensureOutType(outType); err != nil {
 		return err
@@ -197,7 +201,7 @@ func readTo(decoder Decoder, errHandler ErrorHandler, out interface{}) error {
 	return nil
 }
 
-func readEach(decoder SimpleDecoder, errHandle ErrorHandler, c interface{}) error {
+func readEach(decoder SimpleDecoder, c interface{}) error {
 	headers, err := decoder.getCSVRow()
 	if err != nil {
 		return err
@@ -256,7 +260,7 @@ func readEach(decoder SimpleDecoder, errHandle ErrorHandler, c interface{}) erro
 						Column: j + 1,
 						Err:    err,
 					}
-					if errHandle == nil || !errHandle(parseError) {
+					if errHandler == nil || !errHandler(parseError) {
 						return parseError
 					}
 				}

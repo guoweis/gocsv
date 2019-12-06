@@ -163,11 +163,6 @@ func UnmarshalFile(in *os.File, out interface{}) error {
 	return Unmarshal(in, out)
 }
 
-// UnmarshalFile parses the CSV from the file in the interface.
-func UnmarshalFileWithErrorHandler(in *os.File, errHandler ErrorHandler, out interface{}) error {
-	return UnmarshalWithErrorHandler(in, errHandler, out)
-}
-
 // UnmarshalString parses the CSV from the string in the interface.
 func UnmarshalString(in string, out interface{}) error {
 	return Unmarshal(strings.NewReader(in), out)
@@ -180,12 +175,7 @@ func UnmarshalBytes(in []byte, out interface{}) error {
 
 // Unmarshal parses the CSV from the reader in the interface.
 func Unmarshal(in io.Reader, out interface{}) error {
-	return readTo(newSimpleDecoderFromReader(in), nil, out)
-}
-
-// Unmarshal parses the CSV from the reader in the interface.
-func UnmarshalWithErrorHandler(in io.Reader, errHandle ErrorHandler, out interface{}) error {
-	return readTo(newSimpleDecoderFromReader(in), errHandle, out)
+	return readTo(newSimpleDecoderFromReader(in), out)
 }
 
 // UnmarshalWithoutHeaders parses the CSV from the reader in the interface.
@@ -200,21 +190,21 @@ func UnmarshalCSVWithoutHeaders(in CSVReader, out interface{}) error {
 
 // UnmarshalDecoder parses the CSV from the decoder in the interface
 func UnmarshalDecoder(in Decoder, out interface{}) error {
-	return readTo(in, nil, out)
+	return readTo(in, out)
 }
 
 // UnmarshalCSV parses the CSV from the reader in the interface.
 func UnmarshalCSV(in CSVReader, out interface{}) error {
-	return readTo(csvDecoder{in}, nil, out)
+	return readTo(csvDecoder{in}, out)
 }
 
 // UnmarshalToChan parses the CSV from the reader and send each value in the chan c.
 // The channel must have a concrete type.
-func UnmarshalToChan(in io.Reader, errHandle ErrorHandler, c interface{}) error {
+func UnmarshalToChan(in io.Reader, c interface{}) error {
 	if c == nil {
 		return fmt.Errorf("goscv: channel is %v", c)
 	}
-	return readEach(newSimpleDecoderFromReader(in), errHandle, c)
+	return readEach(newSimpleDecoderFromReader(in), c)
 }
 
 // UnmarshalToChanWithoutHeaders parses the CSV from the reader and send each value in the chan c.
@@ -232,19 +222,19 @@ func UnmarshalDecoderToChan(in SimpleDecoder, c interface{}) error {
 	if c == nil {
 		return fmt.Errorf("goscv: channel is %v", c)
 	}
-	return readEach(in, nil, c)
+	return readEach(in, c)
 }
 
 // UnmarshalStringToChan parses the CSV from the string and send each value in the chan c.
 // The channel must have a concrete type.
 func UnmarshalStringToChan(in string, c interface{}) error {
-	return UnmarshalToChan(strings.NewReader(in), nil, c)
+	return UnmarshalToChan(strings.NewReader(in), c)
 }
 
 // UnmarshalBytesToChan parses the CSV from the bytes and send each value in the chan c.
 // The channel must have a concrete type.
 func UnmarshalBytesToChan(in []byte, c interface{}) error {
-	return UnmarshalToChan(bytes.NewReader(in), nil, c)
+	return UnmarshalToChan(bytes.NewReader(in), c)
 }
 
 // UnmarshalToCallback parses the CSV from the reader and send each value to the given func f.
@@ -258,7 +248,7 @@ func UnmarshalToCallback(in io.Reader, f interface{}) error {
 	cerr := make(chan error)
 	c := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, t.In(0)), 0)
 	go func() {
-		cerr <- UnmarshalToChan(in, nil, c.Interface())
+		cerr <- UnmarshalToChan(in, c.Interface())
 	}()
 	for {
 		select {
